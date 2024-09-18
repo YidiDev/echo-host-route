@@ -1,8 +1,10 @@
 package hostroute
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -78,24 +80,25 @@ func TestHostBasedRouting(t *testing.T) {
 	client := &http.Client{}
 
 	for _, tt := range tests {
-		func() {
+		t.Run(fmt.Sprintf("Host: %s, Path: %s", tt.host, tt.path), func(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
 			resp, err := client.Do(req)
+
+			require.NoError(t, err)
+			defer resp.Body.Close()
 			defer func() {
 				err = resp.Body.Close()
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}()
-
-			assert.NoError(t, err)
 
 			var body []byte
 			body, err = io.ReadAll(resp.Body)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
-		}()
+		})
 	}
 }
 
@@ -148,23 +151,24 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 	client := &http.Client{}
 
 	for _, tt := range tests {
-		func() {
+		t.Run(fmt.Sprintf("Host: %s, Path: %s", tt.host, tt.path), func(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
 			resp, err := client.Do(req)
+
+			require.NoError(t, err)
+			defer resp.Body.Close()
 			defer func() {
 				err = resp.Body.Close()
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}()
 
-			assert.NoError(t, err)
-
-			body := make([]byte, resp.ContentLength)
-			_, err = resp.Body.Read(body)
-			assert.NoError(t, err)
+			var body []byte
+			body, err = io.ReadAll(resp.Body)
+			require.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
-		}()
+		})
 	}
 }
