@@ -81,7 +81,10 @@ func TestHostBasedRouting(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
 			resp, err := client.Do(req)
-			defer resp.Body.Close()
+			defer func() {
+				err = resp.Body.Close()
+				assert.NoError(t, err)
+			}()
 
 			assert.NoError(t, err)
 
@@ -91,8 +94,6 @@ func TestHostBasedRouting(t *testing.T) {
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
-			err = resp.Body.Close()
-			assert.NoError(t, err)
 		}()
 	}
 }
@@ -150,7 +151,10 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
 			resp, err := client.Do(req)
-			defer resp.Body.Close()
+			defer func() {
+				err = resp.Body.Close()
+				assert.NoError(t, err)
+			}()
 
 			assert.NoError(t, err)
 
@@ -160,8 +164,6 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
-			err = resp.Body.Close()
-			assert.NoError(t, err)
 		}()
 	}
 }
