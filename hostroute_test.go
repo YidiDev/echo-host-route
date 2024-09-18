@@ -3,6 +3,7 @@ package hostroute
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -41,7 +42,7 @@ func TestHostBasedRouting(t *testing.T) {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
+	SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(g *echo.Group) { g.RouteNotFound("/*", noRouteHandler) }, true)
 
 	server := httptest.NewServer(r)
 	defer server.Close()
@@ -88,8 +89,8 @@ func TestHostBasedRouting(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			body := make([]byte, resp.ContentLength)
-			_, err = resp.Body.Read(body)
+			var body []byte
+			body, err = io.ReadAll(resp.Body)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
@@ -109,7 +110,7 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	SetupHostBasedRoutes(r, hostConfigs, genericHosts, false)
+	SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(g *echo.Group) { g.RouteNotFound("/*", noRouteHandler) }, false)
 
 	server := httptest.NewServer(r)
 	defer server.Close()

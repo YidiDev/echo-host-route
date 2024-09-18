@@ -34,13 +34,14 @@ func createHostBasedRoutingMiddleware(hostConfigMap map[string]*HostConfig, gene
 	}
 }
 
-func SetupHostBasedRoutes(e *echo.Echo, hostConfigs []HostConfig, genericHosts []string, secureAgainstUnknownHosts bool) {
+func SetupHostBasedRoutes(e *echo.Echo, hostConfigs []HostConfig, genericHosts []string, noRouteFactory func(*echo.Group), secureAgainstUnknownHosts bool) {
 	hostConfigMap := make(map[string]*HostConfig)
 	genericHostsMap := stringSliceToMap(genericHosts)
 
 	for i := range hostConfigs {
 		group := e.Host(hostConfigs[i].Host)
 		hostConfigs[i].RouterFactory(group)
+		noRouteFactory(group)
 
 		if hostConfigs[i].Prefix != "" {
 			group = e.Group(fmt.Sprintf("/%s", hostConfigs[i].Prefix))
