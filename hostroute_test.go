@@ -17,24 +17,22 @@ func defineHost1Routes(g *echo.Group) {
 	})
 }
 
-func defineHost2Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello from host2")
+func defineHost2Routes(rg *echo.Group) {
+	rg.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello from host2")
 	})
-	rg.GET("/hi", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hi from host2")
+	rg.GET("/hi", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hi from host2")
 	})
 }
 
-func noRouteHandler(c *gin.Context) {
-	c.String(http.StatusNotFound, "No known route")
+func noRouteHandler(c echo.Context) error {
+	return c.String(http.StatusNotFound, "No known route")
 }
 
 func TestHostBasedRouting(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	r := gin.Default()
-	r.NoRoute(noRouteHandler)
+	r := echo.New()
+	r.RouteNotFound("/*", noRouteHandler)
 
 	hostConfigs := []HostConfig{
 		{Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
@@ -87,24 +85,18 @@ func TestHostBasedRouting(t *testing.T) {
 
 		body := make([]byte, resp.ContentLength)
 		_, err = resp.Body.Read(body)
-		if err != nil {
-			return
-		}
+		assert.NoError(t, err)
 
 		assert.Equal(t, tt.statusCode, resp.StatusCode)
 		assert.Equal(t, tt.expected, string(body))
 		err = resp.Body.Close()
-		if err != nil {
-			return
-		}
+		assert.NoError(t, err)
 	}
 }
 
 func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	r := gin.Default()
-	r.NoRoute(noRouteHandler)
+	r := echo.New()
+	r.RouteNotFound("/*", noRouteHandler)
 
 	hostConfigs := []HostConfig{
 		{Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
@@ -159,16 +151,12 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 
 		body := make([]byte, resp.ContentLength)
 		_, err = resp.Body.Read(body)
-		if err != nil {
-			return
-		}
+		assert.NoError(t, err)
 
 		assert.Equal(t, tt.statusCode, resp.StatusCode)
 		assert.Equal(t, tt.expected, string(body))
-
 		err = resp.Body.Close()
-		if err != nil {
-			return
-		}
+		assert.NoError(t, err)
+
 	}
 }
