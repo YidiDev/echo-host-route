@@ -1,0 +1,56 @@
+# Go related
+/bin/
+/pkg/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go vendor directory
+vendor/
+
+# Mac related
+.DS_Store
+
+# Windows related
+Thumbs.db
+Desktop.ini
+
+# GoLand IDE related files
+.idea/
+*.iml
+*.log
+*.hprof
+/out/
+
+# IDE directories
+.vscode/
+*.sublime-workspace
+
+# Ignore editor swap files
+*~
+# Support for IntelliJ caching
+/.idea/
+# Support for .env files
+.env
+/.env.local
+/.env.development.local
+/.env.test.local
+/.env.qa.local
+
+# GoLand version-specific
+/workspace.xml
+/tasks.xml
+/taskDescriptions.xml
+/usage.statistics.xml
+/gradle.xml
+/jarRepositories.xml
+# Rope project settings
+.settings/
+/project/
+/.Rproj.user/
+/.vscode/*
+.Rproj.user/
