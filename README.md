@@ -1,6 +1,6 @@
 # Host Route Library
 
-A high-performance Echo middleware library for routing based on the host.
+A high-performance Echo middleware library for routing based on the host. This library facilitates the configuration of different routes and behaviors for distinct hostnames, enhancing the ability to host multi-tenant applications on a single server.
 
 ## Installation
 
@@ -12,7 +12,7 @@ go get github.com/YidiDev/echo-host-route
 
 ## Usage
 
-Below is an example of how to utilize the library to define different routes based on the host.
+The following example demonstrates how to use the library to define various routes based on the host name. This helps in setting up multiple applications or APIs served from the same server, each with its specific routing configuration.
 
 ### Example
 
@@ -20,57 +20,73 @@ Below is an example of how to utilize the library to define different routes bas
 package main
 
 import (
-    "github.com/labstack/echo/v4"
-	"github.com/YidiDev/echo-host-route"
-	"log"
-	"net/http"
-	"os"
+   "github.com/YidiDev/echo-host-route"
+   "github.com/labstack/echo/v4"
+   "github.com/labstack/echo/v4/middleware"
+   "log"
+   "net/http"
+   "os"
 )
 
-func defineHost1Routes(rg *echo.Group) {
-	rg.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello from host1")
-	})
-	rg.GET("/hi", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hi from host1")
-	})
+// defineHost1Routes sets up the routes specific to host1.com.
+func defineHost1Routes(group *echo.Group) {
+   // Route to handle request to root URL of host1, returns greeting message.
+   group.GET("/", func(c echo.Context) error {
+      return c.String(http.StatusOK, "Hello from host1")
+   })
+   // Route to handle request to /hi URL of host1, returns a different greeting message.
+   group.GET("/hi", func(c echo.Context) error {
+      return c.String(http.StatusOK, "Hi from host1")
+   })
 }
 
-func defineHost2Routes(rg *echo.Group) {
-	rg.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello from host2")
-	})
-	rg.GET("/hi", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hi from host2")
-	})
+// defineHost2Routes sets up the routes specific to host2.com.
+func defineHost2Routes(group *echo.Group) {
+   // Route to handle request to root URL of host2, returns greeting message.
+   group.GET("/", func(c echo.Context) error {
+      return c.String(http.StatusOK, "Hello from host2")
+   })
+   // Route to handle request to /hi URL of host2, includes log statement and returns a greeting message.
+   group.GET("/hi", func(c echo.Context) error {
+      log.Println("Important stuff")
+      return c.String(http.StatusOK, "Hi from host2")
+   })
 }
 
+// routeNotFoundSpecifier defines behavior for unspecified routes.
+func routeNotFoundSpecifier(group *echo.Group) error {
+   // Route handler for unspecified routes, returns a not-found message.
+   group.RouteNotFound("/*", func(c echo.Context) error {
+      return c.String(http.StatusNotFound, "No known route")
+   })
+   return nil
+}
+
+// init function sets up logging output to standard output.
 func init() {
-	log.SetOutput(os.Stdout)
+   log.SetOutput(os.Stdout)
 }
 
+// main function initializes the Echo instance and sets up host-based routing.
 func main() {
-	r := echo.New()
+   e := echo.New()             // Create a new Echo instance.
+   e.Use(middleware.Recover()) // Middleware to recover from panics.
 
-	// Define host-specific configurations
-	hostConfigs := []hostroute.HostConfig{
-		{Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
-		{Host: "host2.com", Prefix: "2", RouterFactory: defineHost2Routes},
-	}
+   hostConfigs := []hostroute.HostConfig{
+      {Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
+      {Host: "host2.com", Prefix: "2", RouterFactory: defineHost2Routes},
+   }
 
-	// Generic hosts are hosts that will use the primary router without special sub-routes
-	genericHosts := []string{"host3.com", "host4.com"}
+   genericHosts := []string{"host3.com", "host4.com"}
 
-	// Setup host-based routes
-	hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
+   // Setup host-based routes and handle any errors during setup.
+   err := hostroute.SetupHostBasedRoutes(e, hostConfigs, genericHosts, true, routeNotFoundSpecifier)
+   if err != nil {
+      log.Fatal(err) // Log fatal error if setup fails.
+   }
 
-	// Define handler for unmatched routes
-	r.RouteNotFound("/*", func(c echo.Context) error {
-		return c.String(http.StatusNotFound, "No known route")
-	})
-
-	// Start the server
-	r.Start(":8080")
+   // Start the server on port 8080.
+   e.Start(":8080")
 }
 ```
 
@@ -80,7 +96,7 @@ func main() {
 The `HostConfig` struct is used to define the configuration for a specific host:
 - `Host`: The hostname for which the configuration is defined.
 - `Prefix`: A prefix to use for routes specific to this host when accessed on a generic host.
-- `RouterFactory` A function that defined the routes for this host.
+- `RouterFactory`: A function that sets up routing for this host, taking an `*echo.Group` instance to define its routes.
 
 ### Generic Hosts
 Generic hosts are hosts that will have access to all routes defined in all the host configs and any others defined on the default router. This is useful for:
@@ -93,64 +109,12 @@ The `secureAgainstUnknownHosts` boolean flag controls how the middleware handles
 - `true`: Requests from unknown hosts will receive a 404 Not Found Response. This is useful for securing your application against unexpected or unauthorized hosts.
 - `false`: Requests from unknown hosts will be passed through the primary router. This is useful if you want to catch and handle such requests manually.
 
-### Route Configuration Example
+### Additional Host Config
+This param is optional and allows for unlimited inputs. Each input should be a `func(*echo.Group) error`. This is meant for specifying functions that `SetupHostBasedRoutes` should run on every host group after creating it. Common use cases of this are:
+- Configuring a `RouteNotFound` Handler. 
+- Configuring Host Specific Middleware. This can be done in the `HostConfig` in the `RouterFactory`. Alternatively, it could be done here. This may be useful if you want to centralize a lot of the host-specific middleware.
 
-```go
-package main
-
-import (
-   "github.com/labstack/echo/v4"
-   "github.com/YidiDev/echo-host-route"
-	"log"
-	"net/http"
-	"os"
-)
-
-func defineHost1Routes(rg *echo.Group) {
-	rg.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello from host1")
-	})
-	rg.GET("/hi", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hi from host1")
-	})
-}
-
-func defineHost2Routes(rg *echo.Group) {
-	rg.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello from host2")
-	})
-	rg.GET("/hi", func(c echo.Context) error {
-		log.Println("Important stuff")
-		return c.String(http.StatusOK, "Hi from host2")
-	})
-}
-
-func init() {
-	log.SetOutput(os.Stdout)
-}
-
-func main() {
-   r := echo.New()
-
-   hostConfigs := []hostroute.HostConfig{
-      {Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
-      {Host: "host2.com", Prefix: "2", RouterFactory: defineHost2Routes},
-   }
-
-   genericHosts := []string{"host3.com", "host4.com"}
-
-   hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
-
-   r.RouteNotFound("/*", func(c echo.Context) error {
-      return c.String(http.StatusNotFound, "No known route")
-   })
-
-   r.Start(":8080")
-
-}
-```
-
-### Handling Different Hosts
+## Handling Different Hosts
 
 1. **Host-specific Routes**:
    Routes are defined uniquely for each host using a specific `RouterFactory`. The `HostConfig` struct includes the hostname, path prefix, and a function to define routes for that host.
