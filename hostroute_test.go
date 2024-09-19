@@ -33,7 +33,7 @@ func noRouteHandler(c echo.Context) error {
 	return c.String(http.StatusNotFound, "No known route")
 }
 
-func noRouteSpecifier(group *echo.Group) error {
+func noRouteSpecifier(_ string, group *echo.Group) error {
 	group.RouteNotFound("*", noRouteHandler)
 	return nil
 }

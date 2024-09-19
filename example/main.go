@@ -35,7 +35,7 @@ func defineHost2Routes(group *echo.Group) {
 }
 
 // routeNotFoundSpecifier defines behavior for unspecified routes.
-func routeNotFoundSpecifier(group *echo.Group) error {
+func routeNotFoundSpecifier(_ string, group *echo.Group) error {
 	// Route handler for unspecified routes, returns a not-found message.
 	group.RouteNotFound("/*", func(c echo.Context) error {
 		return c.String(http.StatusNotFound, "No known route")
