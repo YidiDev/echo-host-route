@@ -29,7 +29,7 @@ func SecureAgainstUnknownHosts(knownHosts map[string]bool) echo.MiddlewareFunc {
 }
 
 // SetupHostBasedRoutes configures routing based on hostnames.
-func SetupHostBasedRoutes(e *echo.Echo, hostConfigs []HostConfig, genericHosts []string, secureAgainstUnknownHosts bool, additionalHostConfig ...func(*echo.Group) error) error {
+func SetupHostBasedRoutes(e *echo.Echo, hostConfigs []HostConfig, genericHosts []string, secureAgainstUnknownHosts bool, additionalHostConfig ...func(string, *echo.Group) error) error {
 	var allHosts []string
 
 	for _, hostConfig := range hostConfigs {
@@ -40,7 +40,7 @@ func SetupHostBasedRoutes(e *echo.Echo, hostConfigs []HostConfig, genericHosts [
 		}
 		if len(additionalHostConfig) > 0 {
 			for _, config := range additionalHostConfig {
-				err := config(hostGroup) // Apply additional configurations if provided
+				err := config(hostConfig.Host, hostGroup) // Apply additional configurations if provided
 				if err != nil {
 					return err // Return on error
 				}
@@ -65,7 +65,7 @@ func SetupHostBasedRoutes(e *echo.Echo, hostConfigs []HostConfig, genericHosts [
 
 		if len(additionalHostConfig) > 0 {
 			for _, config := range additionalHostConfig {
-				err := config(genericGroup) // Apply additional configurations
+				err := config(genericHost, genericGroup) // Apply additional configurations
 				if err != nil {
 					return err // Return on error
 				}
