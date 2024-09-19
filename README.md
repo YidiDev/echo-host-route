@@ -114,7 +114,7 @@ This param is optional and allows for unlimited inputs. Each input should be a `
 - Configuring a `RouteNotFound` Handler. 
 - Configuring Host Specific Middleware. This can be done in the `HostConfig` in the `RouterFactory`. Alternatively, it could be done here. This may be useful if you want to centralize a lot of the host-specific middleware.
 
-## Handling Different Hosts
+### Handling Different Hosts
 
 1. **Host-specific Routes**:
    Routes are defined uniquely for each host using a specific `RouterFactory`. The `HostConfig` struct includes the hostname, path prefix, and a function to define routes for that host.
@@ -139,3 +139,9 @@ This param is optional and allows for unlimited inputs. Each input should be a `
     ```go
     hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
     ```
+   
+## Sister Project
+This project has a sister project for Gin framework users. If you are using Gin, check out the [Echo Host Route Library](https://github.com/YidiDev/gin-host-route) for similar functionality.
+
+## Contributing
+Contributions are always welcome! If you're interested in contributing to the project, please take a look at our [Contributing Guidelines](CONTRIBUTING.md) file for guidelines on how to get started. We appreciate your help in improving the library!
