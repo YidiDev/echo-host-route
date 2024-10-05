@@ -34,7 +34,7 @@ To implement a new feature, fix a bug, or improve documentation:
 
    ```sh
    git clone https://github.com/YidiDev/echo-host-route.git
-   cd gin-host-route
+   cd echo-host-route
    ```
 
 3. **Create a New Branch**
